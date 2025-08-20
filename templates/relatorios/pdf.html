@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+  body { font-family: DejaVu Sans, Arial, Helvetica; font-size: 12px; color:#111; }
+  h1 { font-size: 20px; margin: 0 0 10px; }
+  h2 { font-size: 16px; margin: 16px 0 6px; }
+  .muted { color: #6b7280; }
+  .box { border: 1px solid #ddd; padding: 10px; border-radius: 6px; }
+  .pill { display:inline-block; padding:3px 8px; border-radius:20px; color:#fff; font-size:11px; }
+  .ok { background:#198754; } .bad { background:#dc3545; } .wait { background:#0d6efd; }
+</style></head>
+<body>
+  <h1>Relatório de Visita</h1>
+  <p class="muted">Gerado em: {{ rep.updated_at|date:"d/m/Y H:i" }}</p>
+  <div class="box">
+    <p><strong>Médico:</strong> {{ rep.appointment.doctor.name }}</p>
+    <p><strong>Data/Hora:</strong> {{ rep.appointment.when|date:"d/m/Y H:i" }}</p>
+    <p><strong>Status:</strong>
+      {% if rep.appointment.status == 'concluida' %}<span class="pill ok">Concluída</span>
+      {% elif rep.appointment.status == 'cancelada' %}<span class="pill bad">Cancelada</span>
+      {% else %}<span class="pill wait">Agendada</span>{% endif %}
+    </p>
+    <p><strong>Nº visita:</strong> {{ rep.get_visit_number_display }}</p>
+    <p><strong>Tipo:</strong> {{ rep.get_mode_display }}</p>
+  </div>
+  <h2>Objetivo</h2><p>{{ rep.objective }}</p>
+  <h2>Resumo</h2><p>{{ rep.summary|linebreaksbr }}</p>
+  <h2>Resultados / Decisões</h2><p>{{ rep.outcome|linebreaksbr }}</p>
+  <h2>Próximos passos</h2><p>{{ rep.next_steps|linebreaksbr }}</p>
+</body></html>

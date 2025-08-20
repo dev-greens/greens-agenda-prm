@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex align-items-center mb-3"><h2 class="m-0 fw-semibold">Consultas</h2></div>
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="table-responsive">
+        <table class="table table-modern align-middle">
+          <thead><tr><th>Data</th><th>Médico</th><th>Status</th><th>Contato</th><th>Observações</th><th class="text-end">Ações</th></tr></thead>
+          <tbody>
+            {% for a in appointments %}
+            <tr>
+              <td>{{ a.when|date:"d/m/Y H:i" }}</td>
+              <td class="fw-medium">{{ a.doctor.name }}</td>
+              <td><span class="badge status-badge {{ a.status }}">{{ a.get_status_display }}</span></td>
+              <td>{{ a.contact_name|default:"—" }}</td>
+              <td class="small">{{ a.notes }}</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-secondary" href="/consultas/{{ a.id }}/editar/">Editar</a>
+                {% with d=a.when|date:'d/m/Y' t=a.when|date:'H:i' %}
+                  {% with msg="Olá Dr(a). "|add:a.doctor.name|add:"! Confirmando nossa visita dia "|add:d|add:" às "|add:t|add:". Status: "|add:a.get_status_display %}
+                    <a class="btn btn-sm btn-success" target="_blank" href="https://wa.me/?text={{ msg|urlencode }}">WhatsApp</a>
+                  {% endwith %}
+                {% endwith %}
+                <form class="d-inline" method="post" action="/consultas/{{ a.id }}/excluir/" onsubmit="return confirm('Excluir esta visita?')">
+                  {% csrf_token %}<button class="btn btn-sm btn-outline-danger">Excluir</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}<tr><td colspan="6" class="p-5 text-center text-muted">Nenhuma consulta registrada.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card p-3">
+      <h5 class="fw-semibold mb-3">Agendar nova consulta</h5>
+      <form method="post" action="/consultas/nova/">
+        {% csrf_token %}
+        <div class="mb-2">{{ form.doctor.label_tag }}{{ form.doctor }}</div>
+        <div class="mb-2">{{ form.contact_name.label_tag }}{{ form.contact_name }}</div>
+        <div class="mb-2">{{ form.when.label_tag }}{{ form.when }}</div>
+        <div class="mb-2">{{ form.status.label_tag }}{{ form.status }}</div>
+        <div class="mb-3">{{ form.notes.label_tag }}{{ form.notes }}</div>
+        <button class="btn btn-brand w-100">Agendar</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

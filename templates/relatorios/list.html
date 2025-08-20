@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="fw-semibold mb-3">Relatórios</h2>
+<div class="card"><div class="table-responsive">
+<table class="table table-modern align-middle">
+  <thead><tr><th>Data</th><th>Médico</th><th>Status</th><th>Relatório</th><th class="text-end">Ações</th></tr></thead>
+  <tbody>
+    {% for a in items %}
+    <tr>
+      <td>{{ a.when|date:"d/m/Y H:i" }}</td>
+      <td class="fw-medium">{{ a.doctor.name }}</td>
+      <td><span class="badge status-badge {{ a.status }}">{{ a.get_status_display }}</span></td>
+      <td>{% if a.report %}<span class="text-success">Criado</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+      <td class="text-end">
+        {% if a.report %}
+          <a class="btn btn-sm btn-outline-secondary" href="/relatorios/{{ a.report.id }}/editar/">Editar</a>
+          <a class="btn btn-sm btn-brand" href="/relatorios/{{ a.report.id }}/pdf/">Baixar PDF</a>
+        {% else %}
+          <a class="btn btn-sm btn-brand" href="/relatorios/novo/{{ a.id }}/">Criar relatório</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}<tr><td colspan="5" class="p-5 text-center text-muted">Sem consultas por enquanto.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div></div>
+{% endblock %}

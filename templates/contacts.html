@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex align-items-center mb-3"><h2 class="m-0 fw-semibold">Médicos</h2></div>
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-modern align-middle">
+          <thead><tr><th>Nome</th><th>CRM</th><th>Especialidade</th><th>E-mail</th><th>Telefone</th><th class="text-end">Ações</th></tr></thead>
+        <tbody>
+          {% for d in doctors %}
+          <tr>
+            <td class="fw-medium">{{ d.name }}</td><td>{{ d.crm }}</td><td>{{ d.specialty }}</td><td>{{ d.email }}</td><td>{{ d.phone }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-secondary" href="/contatos/{{ d.id }}/editar/">Editar</a>
+              <form class="d-inline" method="post" action="/contatos/{{ d.id }}/excluir/" onsubmit="return confirm('Excluir este médico?')">
+                {% csrf_token %}<button class="btn btn-sm btn-outline-danger">Excluir</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}<tr><td colspan="6" class="p-5 text-center text-muted">Nenhum médico cadastrado.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card p-3">
+      <h5 class="fw-semibold mb-3">Adicionar médico</h5>
+      <form method="post" action="/contatos/novo/">
+        {% csrf_token %}
+        <div class="mb-2">{{ form.name.label_tag }}{{ form.name }}</div>
+        <div class="mb-2">{{ form.crm.label_tag }}{{ form.crm }}
+        </div>
+        <div class="mb-2">{{ form.uf.label_tag }}{{ form.uf }}</div>
+        <div class="mb-2">{{ form.specialty.label_tag }}{{ form.specialty }}</div>
+        <div class="mb-2">{{ form.email.label_tag }}{{ form.email }}</div>
+        <div class="mb-2">{{ form.phone.label_tag }}{{ form.phone }}</div>
+        <div class="mb-3">{{ form.notes.label_tag }}{{ form.notes }}</div>
+        <button class="btn btn-brand w-100">Salvar</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

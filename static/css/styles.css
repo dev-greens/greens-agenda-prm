@@ -1,0 +1,26 @@
+:root { --bg:#0f172a; --panel:#111827; --panel-2:#0b1220; --border:#263142; --text:#e5e7eb; --muted:#9ca3af; --brand:#24A259; }
+:root[data-theme="light"] { --bg:#f4f7fb; --panel:#fff; --panel-2:#f5f7fb; --border:#e5e7eb; --text:#0f172a; --muted:#475569; --brand:#24A259; }
+body { background: var(--bg); color: var(--text); }
+.sidebar { width: 240px; background: var(--panel); border-right:1px solid var(--border); height: 100vh; position: sticky; top:0; }
+.nav-link { color: var(--text); opacity: .9; } .nav-link:hover { opacity: 1; background: var(--panel-2); border-radius: 10px;}
+.content .card { background: var(--panel); border:1px solid var(--border); border-radius: 14px; }
+.btn-brand, .btn-outline-brand:hover { background: var(--brand); border-color: var(--brand); color:#fff; }
+.btn-outline-brand { border-color: var(--brand); color: var(--brand); }
+.table-modern thead th { color: var(--muted); font-weight: 600; }
+.badge.agendada { background: #0d6efd; } .badge.concluida { background:#198754; } .badge.cancelada { background:#dc3545; }
+.form-control, .form-select, .form-control:focus, .form-select:focus { background: var(--panel-2); color: var(--text); border-color: var(--border); }
+.modal-modern { background: var(--panel); color: var(--text); border:1px solid var(--border); }
+.small-chart .card-body { padding: .75rem 1rem; }
+.topbar { height:56px; border-bottom:1px solid var(--border); background: var(--panel); }
+
+/* Compact theme chip (without inner icons) */
+.theme-chip { --w: 140px; --h: 30px; --pad: 4px; --knob: 22px; position:relative; display:inline-block; width:var(--w); height:var(--h); }
+.theme-chip input{ display:none; }
+.theme-chip .track{ position:absolute; inset:0; background: color-mix(in srgb, var(--panel-2) 92%, white); border:1px solid var(--border); border-radius: 999px; }
+.theme-chip .knob{ position:absolute; top:calc((var(--h) - var(--knob))/2); left:var(--pad); width:var(--knob); height:var(--knob);
+  background: var(--brand); border-radius:50%; transition:left .2s ease; }
+.theme-chip input:checked ~ .knob{ left: calc(var(--w) - var(--pad) - var(--knob)); }
+
+.sidebar-bottom .small { color: var(--muted) !important; }
+
+#iconSun, #iconMoon{transition:opacity .2s ease}

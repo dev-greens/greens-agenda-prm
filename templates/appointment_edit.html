@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Editar Consulta</h2>
+<form method="post" class="card p-3" action="">
+  {% csrf_token %}
+  <div class="row g-2 form-floating-grid">
+    <div class="col-md-6 form-floating">{{ form.doctor }}<label>{{ form.doctor.label }}</label></div>
+    <div class="col-md-6 form-floating">{{ form.contact_name }}<label>{{ form.contact_name.label }}</label></div>
+    <div class="col-md-6 form-floating">{{ form.when }}<label>{{ form.when.label }}</label></div>
+    <div class="col-md-6 form-floating">{{ form.status }}<label>{{ form.status.label }}</label></div>
+    <div class="col-12">{{ form.notes.label_tag }}{{ form.notes }}</div>
+  </div>
+  <div class="mt-3 d-flex gap-2"><a class="btn btn-secondary" href="/consultas/">Cancelar</a><button class="btn btn-brand">Salvar</button></div>
+</form>
+{% endblock %}

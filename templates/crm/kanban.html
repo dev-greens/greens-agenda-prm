@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<h5 class="mb-3">Pipeline: {{ pipeline.name }}</h5>
+<div class="row g-3">
+  {% for s in stages %}
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>{{ s.name }}</strong>
+        <span class="badge bg-secondary">{{ s.deal_set.count }}</span>
+      </div>
+      <div class="card-body p-2">
+        <div class="kan-col" data-stage="{{ s.id }}">
+          {% for d in s.deal_set.all %}
+          <div class="kan-card card mb-2 p-2" data-id="{{ d.id }}">
+            <div class="fw-semibold small">{{ d.title }}</div>
+            <div class="text-muted small">{{ d.organization }} {{ d.contact }}</div>
+            <div class="small">R$ {{ d.amount }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<script>
+function csrftoken(){ const m=document.cookie.match(/csrftoken=([^;]+)/); return m?m[1]:''; }
+document.querySelectorAll('.kan-col').forEach(col=>{
+  new Sortable(col, { group:'kanban', animation:150,
+    onAdd: async (evt)=>{
+      const card = evt.item, stageId = evt.to.dataset.stage;
+      const id = card.getAttribute('data-id');
+      await fetch('{% url "api_deal_move" %}', {
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':csrftoken()},
+        body: new URLSearchParams({id, stage_id: stageId})
+      });
+    }
+  })
+});
+</script>
+{% endblock %}

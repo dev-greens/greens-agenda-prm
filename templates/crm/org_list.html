@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="m-0">Contas (Organizações)</h5>
+  <a class="btn btn-brand" href="{% url 'org_create' %}">Nova conta</a>
+</div>
+<div class="card"><div class="table-responsive">
+<table class="table table-hover align-middle m-0">
+  <thead><tr><th>Nome</th><th>Cidade</th><th>UF</th><th>Telefone</th></tr></thead>
+  <tbody>
+  {% for o in orgs %}
+    <tr><td>{{ o.name }}</td><td>{{ o.city }}</td><td>{{ o.state }}</td><td>{{ o.phone }}</td></tr>
+  {% empty %}
+    <tr><td colspan="4" class="text-muted">Nenhuma conta cadastrada.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div></div>
+{% endblock %}

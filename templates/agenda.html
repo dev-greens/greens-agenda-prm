@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block content %}
+<form class="row g-2 align-items-end mb-3" id="agenda-filters">
+  <div class="col-sm-6 col-md-4">
+    <label class="form-label">Médico</label>
+    <select class="form-select" name="medico" id="filterDoctor">
+      <option value="">Todos</option>
+      {% for d in doctors %}
+        <option value="{{ d.id }}" {% if selected_doctor == d.id %}selected{% endif %}>{{ d.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-sm-6 col-md-3">
+    <label class="form-label">Status</label>
+    <select class="form-select" name="status" id="filterStatus">
+      <option value="">Todos</option>
+      <option value="agendada" {% if selected_status == 'agendada' %}selected{% endif %}>Agendada</option>
+      <option value="concluida" {% if selected_status == 'concluida' %}selected{% endif %}>Concluída</option>
+      <option value="cancelada" {% if selected_status == 'cancelada' %}selected{% endif %}>Cancelada</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-brand w-100" type="button" id="btnAddQuick">Adicionar</button>
+  </div>
+</form>
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.14/locales/pt-br.global.min.js"></script>
+
+<div class="card"><div class="card-body p-2"><div id="calendar"></div></div></div>
+
+<div class="modal fade" id="modalEvent" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog"><div class="modal-content modal-modern">
+    <form id="formEvent">
+      <div class="modal-header">
+        <h5 class="modal-title">Evento</h5>
+        <button class="btn-close" data-bs-dismiss="modal" type="button"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="id" id="evtId">
+        <div class="mb-2">
+          <label class="form-label">Médico</label>
+          <select class="form-select" name="doctor" id="evtDoctor">
+            <option value="">- selecione -</option>
+            {% for d in doctors %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Início</label>
+          <input class="form-control" type="datetime-local" name="start" id="evtStart">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Status</label>
+          <select class="form-select" name="status" id="evtStatus">
+            <option value="agendada">Agendada</option>
+            <option value="concluida">Concluída</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Observações</label>
+          <textarea class="form-control" rows="2" name="notes" id="evtNotes"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-danger me-auto" id="btnDelete" type="button" style="display:none">Excluir</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+        <button class="btn btn-brand" id="btnSave" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+
+<script>
+  function csrftoken(){ const m=document.cookie.match(/csrftoken=([^;]+)/); return m?m[1]:''; }
+  let calendar;
+
+  function fetchUrl(){
+    const d=document.getElementById('filterDoctor').value;
+    const s=document.getElementById('filterStatus').value;
+    const params=new URLSearchParams();
+    if(d) params.set('doctor', d);
+    if(s) params.set('status', s);
+    return '/api/events/' + (params.toString()?('?'+params.toString()):'');
+  }
+
+  function buildCalendar(){
+    const el=document.getElementById('calendar');
+    if(calendar) calendar.destroy();
+    calendar = new FullCalendar.Calendar(el, {
+      locale:'pt-br', themeSystem:'bootstrap5', height:'auto', contentHeight:600,
+      initialView:'dayGridMonth',
+      headerToolbar:{left:'today prev,next',center:'title',right:'dayGridMonth,timeGridWeek,timeGridDay,listWeek'},
+      slotMinTime:'07:00:00', slotMaxTime:'20:00:00', slotDuration:'00:30:00', nowIndicator:true,
+      editable:true, events: fetchUrl,
+      eventDrop: async (info)=>{
+        await fetch('/api/events/update',{
+          method:'POST',
+          headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':csrftoken()},
+          body:new URLSearchParams({id:info.event.id,start:info.event.start.toISOString().slice(0,19)})
+        });
+      },
+      eventClick: (info)=>{
+        const e=info.event;
+        document.getElementById('evtId').value=e.id;
+        document.getElementById('evtDoctor').value=e.extendedProps.doctor_id||'';
+        document.getElementById('evtStart').value=e.start.toISOString().slice(0,16);
+        document.getElementById('evtStatus').value=e.extendedProps.status||'agendada';
+        document.getElementById('evtNotes').value=e.extendedProps.notes||'';
+        document.getElementById('btnDelete').style.display='inline-block';
+        new bootstrap.Modal(document.getElementById('modalEvent')).show();
+      }
+    });
+    calendar.render();
+  }
+
+  document.getElementById('filterDoctor').addEventListener('change', buildCalendar);
+  document.getElementById('filterStatus').addEventListener('change', buildCalendar);
+
+  document.getElementById('btnAddQuick').addEventListener('click', ()=>{
+    document.getElementById('evtId').value='';
+    document.getElementById('evtDoctor').value=document.getElementById('filterDoctor').value||'';
+    const now=new Date();
+    now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+    document.getElementById('evtStart').value=now.toISOString().slice(0,16);
+    document.getElementById('evtStatus').value='agendada';
+    document.getElementById('evtNotes').value='';
+    document.getElementById('btnDelete').style.display='none';
+    new bootstrap.Modal(document.getElementById('modalEvent')).show();
+  });
+
+  document.getElementById('formEvent').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const data=new URLSearchParams(new FormData(e.target));
+    const id=data.get('id'); const url=id?'/api/events/update':'/api/events/create';
+    await fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':csrftoken()},body:data});
+    bootstrap.Modal.getInstance(document.getElementById('modalEvent')).hide();
+    if(calendar) calendar.refetchEvents();
+  });
+
+  document.getElementById('btnDelete').addEventListener('click', async ()=>{
+    const id=document.getElementById('evtId').value;
+    await fetch('/api/events/delete',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':csrftoken()},body:new URLSearchParams({id})});
+    bootstrap.Modal.getInstance(document.getElementById('modalEvent')).hide();
+    if(calendar) calendar.refetchEvents();
+  });
+
+  document.addEventListener('DOMContentLoaded', buildCalendar);
+</script>
+{% endblock %}

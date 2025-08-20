@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="fw-semibold mb-3">Relatório — {{ appt.doctor.name }} ({{ appt.when|date:"d/m/Y H:i" }})</h2>
+<form method="post" class="card p-3">
+  {% csrf_token %}
+  <div class="row g-3">
+    <div class="col-md-3"><label class="form-label">Número da visita</label>{{ form.visit_number }}</div>
+    <div class="col-md-3"><label class="form-label">Tipo de visita</label>{{ form.mode }}</div>
+    <div class="col-md-6"><label class="form-label">Objetivo</label>{{ form.objective }}</div>
+    <div class="col-12"><label class="form-label">Resumo</label>{{ form.summary }}</div>
+    <div class="col-12"><label class="form-label">Resultados / Decisões</label>{{ form.outcome }}</div>
+    <div class="col-12"><label class="form-label">Próximos passos</label>{{ form.next_steps }}</div>
+  </div>
+  <div class="mt-3 d-flex gap-2">
+    <a class="btn btn-secondary" href="/relatorios/">Voltar</a>
+    <button class="btn btn-brand">Salvar</button>
+    {% if rep %}<a class="btn btn-outline-brand ms-auto" href="/relatorios/{{ rep.id }}/pdf/">Baixar PDF</a>{% endif %}
+  </div>
+</form>
+{% endblock %}
