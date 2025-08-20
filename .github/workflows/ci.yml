@@ -38,8 +38,9 @@ jobs:
       DJANGO_ALLOWED_HOSTS: localhost
       DJANGO_PROJECT: greens_scheduler
 
-      CELERY_BROKER_URL: ${{ env.REDIS_URL }}
-      CELERY_RESULT_BACKEND: ${{ env.REDIS_URL }}
+      # 👉 Sem usar ${{ env.REDIS_URL }} aqui (para não quebrar o parser)
+      CELERY_BROKER_URL: redis://127.0.0.1:6379/0
+      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/0
 
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +53,8 @@ jobs:
       - name: Instalar dependências
         run: |
           python -m pip install -U pip setuptools wheel
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements.txt ]; then pip install -r 
+requirements.txt; fi
           pip install \
             "django~=4.2" \
             "celery~=5.3" "redis~=5.0" \
