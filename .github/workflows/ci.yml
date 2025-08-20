@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
   pull_request:
@@ -27,7 +26,6 @@ jobs:
           --health-interval=5s --health-timeout=5s --health-retries=30
 
     env:
-      # DB / Redis usados pelo settings.py
       POSTGRES_DB: greens_prm
       POSTGRES_USER: greens
       POSTGRES_PASSWORD: greens
@@ -35,13 +33,11 @@ jobs:
       POSTGRES_PORT: 5432
       REDIS_URL: redis://127.0.0.1:6379/0
 
-      # Django
       DJANGO_SECRET_KEY: test
       DJANGO_DEBUG: 0
       DJANGO_ALLOWED_HOSTS: localhost
       DJANGO_PROJECT: greens_scheduler
 
-      # Celery
       CELERY_BROKER_URL: ${{ env.REDIS_URL }}
       CELERY_RESULT_BACKEND: ${{ env.REDIS_URL }}
 
@@ -56,33 +52,24 @@ jobs:
       - name: Instalar dependências
         run: |
           python -m pip install -U pip setuptools wheel
-          # Se houver requirements, use; senão, instala o básico do projeto
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install \
-            django~=4.2 \
-            celery~=5.3 redis~=5.0 \
+            "django~=4.2" \
+            "celery~=5.3" "redis~=5.0" \
             "psycopg[binary]" \
             python-dotenv \
             djangorestframework \
             django-simple-history \
             sentry-sdk \
-            phonenumbers django-phonenumber-field[phonenumberslite] \
+            phonenumbers "django-phonenumber-field[phonenumberslite]" \
             pandas openpyxl || true
-          python - <<'PY'
-import importlib, sys
-mods = ["django","celery","redis","psycopg","python_dotenv","rest_framework","simple_history","sentry_sdk"]
-for m in mods:
-    try:
-        importlib.import_module(m)
-        print("OK:", m)
-    except Exception as e:
-        print("FALHOU:", m, e, file=sys.stderr)
-PY
 
       - name: Aguardar Postgres/Redis ficarem prontos
+        shell: bash
         run: |
           for i in {1..30}; do
-            (pg_isready -h 127.0.0.1 -p 5432 -U greens) && (redis-cli -h 127.0.0.1 -p 6379 ping | grep -q PONG) && break
+            pg_isready -h 127.0.0.1 -p 5432 -U greens >/dev/null 2>&1 && \
+            redis-cli -h 127.0.0.1 -p 6379 ping | grep -q PONG && break
             echo "Aguardando serviços... ($i/30)"; sleep 2
           done
 
@@ -93,10 +80,8 @@ PY
 
       - name: Healthcheck rápido
         run: |
-          python - <<'PY'
-from django.conf import settings
-print("DB:", settings.DATABASES['default']['ENGINE'])
-print("REDIS_URL:", settings.REDIS_URL)
-print("Projeto:", settings.ROOT_URLCONF)
-PY
+          python manage.py shell -c "from django.conf import settings; \
+            print('DB:', settings.DATABASES['default']['ENGINE']); \
+            print('REDIS_URL:', settings.REDIS_URL); \
+            print('Projeto:', settings.ROOT_URLCONF)"
 
