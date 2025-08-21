@@ -101,6 +101,15 @@ DATABASES = {
     }
 }
 
+# --- Fallback para SQLite (usado no CI e, se quiser, no dev local) ---
+if os.getenv("USE_SQLITE", "0") == "1":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
 # -----------------------------
 # Internacionalização / Fuso
 # -----------------------------
