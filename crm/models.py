@@ -65,6 +65,7 @@ class VisitReport(models.Model):
     next_steps = models.TextField('Próximos passos', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
     def __str__(self):
         return f"Relatório - {self.appointment}"
 

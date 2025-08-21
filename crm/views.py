@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.utils import timezone
 from django.db.models.functions import TruncMonth
 from django.db.models import Count
@@ -13,6 +13,33 @@ from .models import Doctor, Appointment, STATUS_CHOICES, VisitReport
 from .forms import DoctorForm, AppointmentForm, VisitReportForm
 from .utils import append_visit_to_excel
 from .google_calendar import add_event_to_google_calendar
+
+def _is_manager(user):
+    # Admin ou membro do grupo Gestor pode ver/editar tudo
+    return user.is_superuser or user.groups.filter(name__in=["Admin", "Gestor"]).exists()
+
+def _parse_iso_safe(s):
+    """
+    Aceita 'YYYY-MM-DDTHH:MM:SS' (naive) e ISO com offset (ex.: ...-03:00).
+    Retorna datetime *aware* na timezone atual do Django.
+    """
+    dt = None
+    try:
+        dt = datetime.fromisoformat(s)  # aceita com/sem offset
+    except ValueError:
+        try:
+            dt = datetime.strptime(s, "%Y-%m-%dT%H:%M:%S")  # naive
+        except ValueError:
+            return None
+    if timezone.is_naive(dt):
+        return timezone.make_aware(dt, timezone.get_current_timezone())
+    # normaliza para tz atual
+    return timezone.localtime(dt, timezone.get_current_timezone())
+
+def _scope_by_owner(qs, user):
+    # Representante só enxerga o que é dele
+    return qs if _is_manager(user) else qs.filter(owner=user)
+
 
 STATUS_MAP = dict(STATUS_CHOICES)
 STATUS_COLORS = {
@@ -263,6 +290,7 @@ def appointment_delete(request, pk):
 @login_required
 def api_events(request):
     qs = _apply_filters(Appointment.objects.select_related('doctor'), request)
+    qs = _scope_by_owner(qs, request.user)
     events = []
     tz = timezone.get_current_timezone()
     for a in qs:
@@ -303,30 +331,56 @@ def api_events_create(request):
 @require_POST
 @login_required
 def api_events_update(request):
+    appt_id = request.POST.get('id')
+    if not appt_id:
+        return HttpResponseBadRequest('missing id')
+
+    # 1) carrega o registro
     try:
-        appt = Appointment.objects.get(pk=int(request.POST.get('id')))
+        appt = Appointment.objects.select_related('doctor').get(pk=int(appt_id))
     except Exception:
         return HttpResponseBadRequest('invalid id')
+
+    # 2) 🔐 PERMISSÃO: checa o dono ANTES de validar/alterar campos
+    if not _is_manager(request.user) and getattr(appt, 'owner_id', None) != request.user.id:
+        return HttpResponseForbidden('not allowed')
+
+    # 3) atualizações
     if request.POST.get('start'):
-        when = _parse_iso(request.POST.get('start'))
+        when = _parse_iso_safe(request.POST['start'])
         if when is None:
             return HttpResponseBadRequest('invalid start')
         appt.when = when
-    if request.POST.get('status') in STATUS_MAP:
-        appt.status = request.POST['status']
+
+    status = request.POST.get('status')
+    if status in STATUS_MAP:
+        appt.status = status
+
     if 'notes' in request.POST:
         appt.notes = request.POST.get('notes', '')
+
     appt.save()
     return JsonResponse({'ok': True})
 
 @require_POST
 @login_required
 def api_events_delete(request):
+    appt_id = request.POST.get('id')
+    if not appt_id:
+        return HttpResponseBadRequest('missing id')
+
     try:
-        Appointment.objects.get(pk=int(request.POST.get('id'))).delete()
-        return JsonResponse({'ok': True})
+        appt = Appointment.objects.select_related('doctor').get(pk=int(appt_id))
     except Exception:
         return HttpResponseBadRequest('invalid id')
+
+    # 🔐 Permissão: representante só pode apagar o que É DELE
+    if not _is_manager(request.user) and getattr(appt, 'owner_id', None) != request.user.id:
+        return HttpResponseForbidden('not allowed')
+
+    appt.delete()
+    return JsonResponse({'ok': True})
+
 
 
 @login_required

@@ -1,6 +1,12 @@
 import os
 from pathlib import Path
-from celery.schedules import crontab
+
+try:
+    from celery.schedules import crontab
+except Exception:
+    # fallback simples para não quebrar o Django quando celery não estiver instalado
+    def crontab(*args, **kwargs):
+        return None
 
 # -----------------------------
 # .env (variáveis de ambiente)
@@ -37,8 +43,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "simple_history",
     "crm",
+    "simple_history",
     # --- suas apps locais aqui ---
     # "agenda",
     # "accounts",

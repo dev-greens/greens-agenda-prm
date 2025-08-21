@@ -1,10 +1,10 @@
 from pathlib import Path
-import pandas as pd
 from django.conf import settings
 
 DATA_PATH = Path(settings.BASE_DIR) / 'data' / 'visitas.xlsx'
 
 def append_visit_to_excel(row: dict):
+    import pandas as pd
     df_new = pd.DataFrame([row])
     for col in df_new.columns:
         if str(col).lower() in ('datahora', 'when'):
