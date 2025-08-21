@@ -1,6 +1,4 @@
-cat > .github/workflows/ci.yml <<'YAML'
 name: CI (smoke)
-
 on:
   push:
   pull_request:
@@ -13,7 +11,7 @@ jobs:
       DJANGO_DEBUG: "0"
       DJANGO_ALLOWED_HOSTS: localhost
       DJANGO_PROJECT: greens_scheduler
-      USE_SQLITE: "1"   # 👉 usa SQLite no CI
+      USE_SQLITE: "1"   # usa SQLite no CI
 
     steps:
       - uses: actions/checkout@v4
@@ -27,11 +25,9 @@ jobs:
         run: |
           python -m pip install -U pip setuptools wheel
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          # fallback caso não exista requirements.txt completo
-          pip install django python-dotenv djangorestframework django-simple-history || true
+          pip install django python-dotenv djangorestframework django-simple-history
 
       - name: Migrate and check
         run: |
           python manage.py migrate --noinput
           python manage.py check
-YAML
