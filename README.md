@@ -32,3 +32,16 @@ python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
 ```
+
+
+### Rodar Docker
+
+# 1) build + start
+```bash
+docker compose up -d --build
+```
+
+# 2) (primeira vez) criar superusuário
+```bash
+docker compose exec web python manage.py createsuperuser
+```
